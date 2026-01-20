@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 from scipy.interpolate import interp1d
+from bolos.grid import Grid
 
 
 class Process(object):
@@ -22,9 +23,9 @@ class Process(object):
                     'EFFECTIVE': 1}
 
                  
-    def __init__(self, target=None, kind=None, data=None,
-                 comment='', mass_ratio=None,
-                 product=None, threshold=0, weight_ratio=None):
+    def __init__(self, target: str = None, kind: str = None, data: np.ndarray[float] | list[float] = None,
+                 comment: str = '', mass_ratio: float = None,
+                 product: str = None, threshold: float = 0, weight_ratio: float = None):
         self.target_name = target
 
         # We will link this later
@@ -59,7 +60,7 @@ class Process(object):
         self.cached_grid = None
 
 
-    def scatterings(self, g, eps):
+    def scatterings(self, g: np.ndarray[float], eps: np.ndarray[float]) -> np.ndarray[float]:
         if len(self.j) == 0:
             # When we do not have inelastic collisions or when the grid is
             # smaller than the thresholds, we still return an empty array
@@ -74,7 +75,7 @@ class Process(object):
         return r
         
         
-    def set_grid_cache(self, grid):
+    def set_grid_cache(self, grid: Grid):
         """ Sets a grid cache of the intersections between grid cell j and grid
         cell i shifted. 
         """
@@ -108,7 +109,7 @@ class Process(object):
         self.sigma = np.c_[sigma0[:-1], sigma0[1:]]
         self.eps   = np.c_[nodes[:-1], nodes[1:]]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{%s: %s %s}" % (self.kind, self.target_name, 
                                 "-> " + self.product if self.product else "")
 
@@ -116,7 +117,7 @@ class Process(object):
 class NullProcess(Process):
     """ This is a null process with a 0 cross section it is useful 
     when we reduce other processes. """
-    def __init__(self, target, kind):
+    def __init__(self, target: str, kind: str):
         self.data = np.empty((0, 2))
         self.interp = lambda x: np.zeros_like(x)
         self.target_name = target
@@ -132,11 +133,11 @@ class NullProcess(Process):
         self.x = np.array([])
         self.y = np.array([])
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{NULL}"
 
 
-def padinterp(data):
+def padinterp(data: np.ndarray[float]) -> interp1d:
     """ Interpolates from data but adds elements at the beginning and end
     to extrapolate cross-sections. """
     if data[0, 0] > 0:
@@ -149,7 +150,7 @@ def padinterp(data):
     return interp1d(x, y, kind='linear')
 
 
-def int_linexp0(a, b, u0, u1, g, x0):
+def int_linexp0(a: float, b: float, u0: float, u1: float, g: float, x0: float) -> np.ndarray[float]:
     """ This is the integral in [a, b] of u(x) * exp(g * (x0 - x)) * x 
     assuming that
     u is linear with u({a, b}) = {u0, u1}."""

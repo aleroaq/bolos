@@ -3,13 +3,13 @@ import logging
 
 import numpy as np
 
-from .process import Process, NullProcess
+from bolos.process import Process
 
 
 class Target(object):
     """ A class to contain all information related to one target. """
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         """ Initializes an instance of target named name."""
         self.name = name
         self.mass_ratio = None
@@ -35,7 +35,7 @@ class Target(object):
 
         logging.debug("Target %s created." % str(self))
 
-    def add_process(self, process):
+    def add_process(self, process: Process):
         kind = self.kind[process.kind]
         kind.append(process)
 
@@ -57,9 +57,7 @@ class Target(object):
         logging.debug("Process %s added to target %s" 
                       % (str(process), str(self)))
 
-        
-
-    def ensure_elastic(self):
+    def ensure_elastic(self) -> None:
         """ Makes sure that the process has an elastic cross-section.
         If the user has specified an effective cross-section, we remove
         all the other cross-sections from it. """
@@ -104,21 +102,20 @@ class Target(object):
 
 
     @property
-    def inelastic(self):
+    def inelastic(self) -> list[Process]: 
         """ An useful abbreviation. """
         return (self.attachment + self.ionization + self.excitation)
 
     @property
-    def everything(self):
+    def everything(self) -> list[Process]:
         """ A list with ALL processes.  We do not use all as a name
         to avoid confusion with the python function."""
         return (self.elastic + self.attachment 
                 + self.ionization + self.excitation)
 
-    
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Target(%s)" % repr(self.name)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 

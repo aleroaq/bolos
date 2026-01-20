@@ -33,7 +33,7 @@ class Grid(object):
     LogGrid : A logarithmic grid.
 
     """
-    def __init__(self, x0, x1, n):
+    def __init__(self, x0: float, x1: float, n: int):
         self.x0 = x0
         self.x1 = x1
         self.delta = x1 - x0
@@ -62,7 +62,7 @@ class Grid(object):
         self._interp = None
 
 
-    def interpolate(self, f, other):
+    def interpolate(self, f: np.ndarray[float], other: "Grid") -> np.ndarray[float]:
         """ Interpolates into this grid an eedf defined in another grid. 
 
         Parameters
@@ -89,7 +89,7 @@ class Grid(object):
 
 
 
-    def cell(self, x):
+    def cell(self, x: float) -> int:
         """ Returns the cell index containing the value x. 
 
         Parameters
@@ -108,19 +108,19 @@ class Grid(object):
 
 class LinearGrid(Grid):
     """ A grid with linear spacing. """
-    def f(self, x):
+    def f(self, x: float) -> float:
         return x
 
-    def finv(self, w):
+    def finv(self, w: float) -> float:
         return w
 
 
 class QuadraticGrid(Grid):
     """ A grid with quadratic spacing. """
-    def f(self, x):
+    def f(self, x: float) -> float:
         return np.sqrt(x - self.x0)
 
-    def finv(self, w):
+    def finv(self, w: float) -> float:
         return w**2 + self.x0
 
 
@@ -129,7 +129,7 @@ class GeometricGrid(Grid):
     here the length
     of cell i+1 is r times the length of cell i.
     """
-    def __init__(self, x0, x1, n, r=1.1):
+    def __init__(self, x0: float, x1: float, n: int, r: float = 1.1):
         self.r = r
         self.logr = np.log(r)
         self.rn_minus_1 = np.exp(n * self.logr) - 1
@@ -137,11 +137,11 @@ class GeometricGrid(Grid):
         super(GeometricGrid, self).__init__(x0, x1, n)
 
 
-    def f(self, x):
+    def f(self, x: float) -> float:
         return (np.log(1 + (x - self.x0) * self.rn_minus_1 / self.delta)
                 / self.logr)
 
-    def finv(self, w):
+    def finv(self, w: float) -> float:
         return (self.x0 + self.delta * (np.exp(w * self.logr) - 1) 
                 / self.rn_minus_1)
 
@@ -151,23 +151,23 @@ class LogGrid(Grid):
     to avoid log(0) = -inf. The grid is actually logarithmic only for
     x >> s.
     """
-    def __init__(self, x0, x1, n, s=10.):
+    def __init__(self, x0: float, x1: float, n: int, s: float = 10.):
         self.s = s
         super(LogGrid, self).__init__(x0, x1, n)
 
 
-    def f(self, x):
+    def f(self, x: float) -> float:
         return np.log(self.s + (x - self.x0))
 
 
-    def finv(self, w):
+    def finv(self, w: float) -> float:
         return np.exp(w) - self.s + self.x0
 
 
 class AutomaticGrid(Grid):
     """ A grid set automatically using a previous estimation of the EEDF
     to fix a peak energy.  """
-    def __init__(self, grid, f0, delta=1e-4):
+    def __init__(self, grid: Grid, f0: np.ndarray[float], delta: float = 1e-4):
         # We will create a new grid where the number of particles is roughly
         # the same inside each cell and the number of cells is the same as in
         # grid.
@@ -195,7 +195,7 @@ class AutomaticGrid(Grid):
 
 
 
-def mkgrid(kind, *args, **kwargs):
+def mkgrid(kind: str, *args, **kwargs) -> Grid:
     """ Builds and returns a grid of class kind.  Possible values are
     'linear', 'lin', 'quadratic', 'quad', 'logarithmic', 'log'.
     """

@@ -7,23 +7,23 @@ documented below.
     
 """
 
-import sys
+import io
 import re
 import numpy as np
 import logging
 
 
-def parse(fp):
+def parse(fp: io.TextIOBase) -> list[dict]:
     """ Parses a BOLSIG+ cross-sections file.  
 
     Parameters
     ----------
-    fp : file-like
+    fp : io.TextIOBase
        A file object pointing to a Bolsig+-compatible cross-sections file.
 
     Returns
     -------
-    processes : list of dictionaries
+    processes : list of dict
        A list with all processes, in dictionary form, included in the file.
 
     Note
@@ -59,7 +59,7 @@ def parse(fp):
 
 # BOLSIG+'s user guide saye that the separators must consist of at least five dashes
 RE_SEP = re.compile("-----+")
-def _read_until_sep(fp):
+def _read_until_sep(fp: io.TextIOBase) -> list[str]:
     """ Reads lines from fp until a we find a separator line. """
     lines = []
     for line in fp:
@@ -70,7 +70,7 @@ def _read_until_sep(fp):
     return lines
 
 
-def _read_block(fp, has_arg=True):
+def _read_block(fp: io.TextIOBase, has_arg: bool = True) -> tuple[str, str | None, str, list]:
     """ Reads data of a process, contained in a block. 
     has_arg indicates wether we have to read an argument line"""
     target = fp.readline().strip()
@@ -90,7 +90,7 @@ def _read_block(fp, has_arg=True):
 # Specialized funcion for each keyword. They all return dictionaries with the
 # relevant attibutes.
 # 
-def _read_momentum(fp):
+def _read_momentum(fp: io.TextIOBase) -> dict:
     """ Reads a MOMENTUM or EFFECTIVE block. """
     target, arg, comment, data = _read_block(fp, has_arg=True)
     mass_ratio = float(arg.split()[0])
@@ -102,7 +102,7 @@ def _read_momentum(fp):
     return d
 
 RE_ARROW = re.compile('<?->')    
-def _read_excitation(fp):
+def _read_excitation(fp: io.TextIOBase) -> dict:
     """ Reads an EXCITATION or IONIZATION block. """
     target, arg, comment, data = _read_block(fp, has_arg=True)
     lhs, rhs = [s.strip() for s in RE_ARROW.split(target)]
@@ -122,7 +122,7 @@ def _read_excitation(fp):
     return d
 
 
-def _read_attachment(fp):
+def _read_attachment(fp: io.TextIOBase) -> dict:
     """ Reads an ATTACHMENT block. """
     target, arg, comment, data = _read_block(fp, has_arg=False)
 

@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=64.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bolos"
+dynamic = ["version"] # Version is read from __version__.txt
+description = "A library to solve the Boltzmann equation"
+authors = [
+    { name = "Alejandro Luque" },       # Original author
+    { name = "Bang Shiuh" },            # Author
+    { name = "Alejandro Roa Quintero" } # Author of this version
+]
+readme = "README.rst"
+requires-python = ">=3.9"
+license = { text = "LGPLv2"}
+keywords = [
+    "physics",
+    "plasma",
+    "boltzmann"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
+    "Programming Language :: Python3",
+    "Natural Language :: English"
+]
+dependencies = [
+    "numpy", 
+    "scipy"
+]
+
+[project.urls]
+Homepage = "https://gitlab.com/mariottop/pycollirad"
+
+[tool.setuptools]
+packages = ["bolos"]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {file = ["__version__.txt"]}
