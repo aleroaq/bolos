@@ -1,6 +1,7 @@
 """ Routines to handle different kinds of grids (linear, quadratic, logarithmic)
 """
 import numpy as np
+import numpy.typing as npt
 from scipy.interpolate import interp1d
 
 class Grid(object):
@@ -62,7 +63,7 @@ class Grid(object):
         self._interp = None
 
 
-    def interpolate(self, f: np.ndarray[float], other: "Grid") -> np.ndarray[float]:
+    def interpolate(self, f: npt.ArrayLike[float], other: "Grid") -> npt.ArrayLike[float]:
         """ Interpolates into this grid an eedf defined in another grid. 
 
         Parameters
@@ -167,7 +168,7 @@ class LogGrid(Grid):
 class AutomaticGrid(Grid):
     """ A grid set automatically using a previous estimation of the EEDF
     to fix a peak energy.  """
-    def __init__(self, grid: Grid, f0: np.ndarray[float], delta: float = 1e-4):
+    def __init__(self, grid: Grid, f0: npt.ArrayLike[float], delta: float = 1e-4):
         # We will create a new grid where the number of particles is roughly
         # the same inside each cell and the number of cells is the same as in
         # grid.

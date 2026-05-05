@@ -5,3 +5,4 @@ process.pyc
 target.pyc
 *.DS_Store
 *.pyc
+*.vscode

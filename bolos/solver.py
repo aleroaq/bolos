@@ -21,6 +21,7 @@ import logging
 
 from math import sqrt
 import numpy as np
+import numpy.typing as npt
 
 # Units in this module will be SI units, except energies, which are expressed
 # in eV.
@@ -447,7 +448,7 @@ class BoltzmannSolver(object):
     # Here are the functions that depend on F0 and are therefore
     # called in each iteration.  These are all pure-functions without
     # side-effects and without changing the state of self
-    def maxwell(self, kT: float) -> np.ndarray[float]:
+    def maxwell(self, kT: float) -> npt.ArrayLike[float]:
         """ Calculates a Maxwell-Boltzmann distribution function.
 
         Parameters
@@ -469,7 +470,7 @@ class BoltzmannSolver(object):
                 * kT**(-3./2.) * np.exp(-self.cenergy / kT))
 
 
-    def iterate(self, f0: np.ndarray[float], delta: float = 1e14) -> np.ndarray[float]:
+    def iterate(self, f0: npt.ArrayLike[float], delta: float = 1e14) -> npt.ArrayLike[float]:
         """ Iterates once the EEDF.
 
         Parameters
@@ -501,8 +502,8 @@ class BoltzmannSolver(object):
         return self._normalized(f1)
 
 
-    def converge(self, f0: np.ndarray[float], maxn: int = 100, rtol: float = 1e-5, delta0: float = 1e14, m: float = 4.0,
-                 full: bool = False, **kwargs) -> np.ndarray[float] | tuple[np.ndarray[float], int, float] | ConvergenceError:
+    def converge(self, f0: npt.ArrayLike[float], maxn: int = 100, rtol: float = 1e-5, delta0: float = 1e14, m: float = 4.0,
+                 full: bool = False, **kwargs) -> npt.ArrayLike[float] | tuple[npt.ArrayLike[float], int, float] | ConvergenceError:
         """ Iterates and attempted EEDF until convergence is reached.
 
         Parameters
@@ -576,7 +577,7 @@ class BoltzmannSolver(object):
         raise ConvergenceError()
 
 
-    def _linsystem(self, F: np.ndarray[float]) -> tuple[sparse.dia_matrix, sparse.csr_matrix]:
+    def _linsystem(self, F: npt.ArrayLike[float]) -> tuple[sparse.dia_matrix, sparse.csr_matrix]:
         Q = self._PQ(F)
 
         # Useful for debugging but wasteful in normal times.
@@ -600,17 +601,17 @@ class BoltzmannSolver(object):
         return A, Q
 
 
-    def _norm(self, f: np.ndarray[float]) -> float:
+    def _norm(self, f: npt.ArrayLike[float]) -> float:
         return integrate.simpson(f * np.sqrt(self.cenergy), x=self.cenergy)
 
         # return np.sum(f * np.sqrt(self.cenergy) * self.denergy)
 
-    def _normalized(self, f: np.ndarray[float]) -> np.ndarray[float]:
+    def _normalized(self, f: npt.ArrayLike[float]) -> npt.ArrayLike[float]:
         N = self._norm(f)
         return f / N
 
 
-    def _scharf_gummel(self, sigma_tilde: np.ndarray[float], G: float = 0) -> sparse.dia_matrix:
+    def _scharf_gummel(self, sigma_tilde: npt.ArrayLike[float], G: float = 0) -> sparse.dia_matrix:
         D = self.DA / (sigma_tilde) / (1. + self.FN**2 / (sigma_tilde**2 * GAMMA**2 * self.benergy)) + self.DB
 
         # Due to the zero flux b.c. the values of z[0] and z[-1] are never used.
@@ -655,7 +656,7 @@ class BoltzmannSolver(object):
         return A
 
 
-    def _g(self, F0: np.ndarray[float]) -> np.ndarray[float]:
+    def _g(self, F0: npt.ArrayLike[float]) -> npt.ArrayLike[float]:
         Fp = np.r_[F0[0], F0, F0[-1]]
         cenergyp = np.r_[self.cenergy[0], self.cenergy, self.cenergy[-1]]
         g = np.log(Fp[2:] / Fp[:-2]) / (cenergyp[2:] - cenergyp[:-2])
@@ -663,7 +664,7 @@ class BoltzmannSolver(object):
         return g
 
 
-    def _PQ(self, F0: np.ndarray[float], reactions: list = None) -> sparse.csr_matrix:
+    def _PQ(self, F0: npt.ArrayLike[float], reactions: list = None) -> sparse.csr_matrix:
         PQ = sparse.csr_matrix((self.n, self.n))
 
         g = self._g(F0)
@@ -688,7 +689,7 @@ class BoltzmannSolver(object):
 
         return PQ
     
-    def _coulomb(self, F0: np.ndarray[float], electron_density: float, ion_degree: float) -> None:
+    def _coulomb(self, F0: npt.ArrayLike[float], electron_density: float, ion_degree: float) -> None:
         coulomb_param = (12. * np.pi * (co.epsilon_0 * kTe)**1.5 / 
                          co.e**3 / np.sqrt(electron_density))
         a = co.e**2 * GAMMA / 24. / np.pi / co.epsilon_0**2 * np.log(coulomb_param)
@@ -714,7 +715,7 @@ class BoltzmannSolver(object):
     ##
     # Now some functions to calculate rates transport parameters from the
     # converged F0
-    def rate(self, F0: np.ndarray[float], k: Process | str, weighted: bool = False) -> float:
+    def rate(self, F0: npt.ArrayLike[float], k: Process | str, weighted: bool = False) -> float:
         """ Calculates the rate of a process from a (usually converged) EEDF.
 
         Parameters
@@ -763,7 +764,7 @@ class BoltzmannSolver(object):
         return rate
 
 
-    def mobility(self, F0: np.ndarray[float]) -> float:
+    def mobility(self, F0: npt.ArrayLike[float]) -> float:
         """ Calculates the reduced mobility (mobility * N) from the EEDF.
 
         Parameters
@@ -798,7 +799,7 @@ class BoltzmannSolver(object):
         return -(GAMMA / 3) * integrate.simpson(y, x=self.benergy)
 
 
-    def diffusion(self, F0: np.ndarray[float]) -> float:
+    def diffusion(self, F0: npt.ArrayLike[float]) -> float:
         """ Calculates the diffusion coefficient from a
         distribution function.
 
@@ -834,7 +835,7 @@ class BoltzmannSolver(object):
         return (GAMMA / 3) * integrate.simpson(y, x=self.cenergy)
 
 
-    def mean_energy(self, F0: np.ndarray[float]) -> float:
+    def mean_energy(self, F0: npt.ArrayLike[float]) -> float:
         """ Calculates the mean energy from a distribution function.
 
         Parameters
@@ -853,7 +854,7 @@ class BoltzmannSolver(object):
         return np.sum(0.4 * F0 * de52)
 
 
-    def electron_temperature(self, F0: np.ndarray[float]) -> float:
+    def electron_temperature(self, F0: npt.ArrayLike[float]) -> float:
         """ Calculate electron temperature base on mean enable_energy.
 
         Parameters
@@ -870,7 +871,7 @@ class BoltzmannSolver(object):
         return 2./3. * self.mean_energy(F0) * ELECTRONVOLT / KB
 
 
-    def normalized_inelastic_energy_loss(self, F0: np.ndarray[float], target_name: str = None) -> float:
+    def normalized_inelastic_energy_loss(self, F0: npt.ArrayLike[float], target_name: str = None) -> float:
         energy = 0.0
         if target_name is None:
             for target, process in self.iter_inelastic():
@@ -882,7 +883,7 @@ class BoltzmannSolver(object):
         return energy
 
 
-    def normalized_elastic_energy_loss(self, F0: np.ndarray[float]) -> float:
+    def normalized_elastic_energy_loss(self, F0: npt.ArrayLike[float]) -> float:
         energy = 0.0
         DF0 = np.r_[0.0, np.diff(F0) / np.diff(self.cenergy), 0.0]
         for target, process in self.iter_elastic():
@@ -894,9 +895,9 @@ class BoltzmannSolver(object):
         return GAMMA * energy
 
 
-    def normalized_total_energy_loss(self, F0: np.ndarray[float]) -> float:
+    def normalized_total_energy_loss(self, F0: npt.ArrayLike[float]) -> float:
         return self.normalized_elastic_energy_loss(F0) + self.normalized_inelastic_energy_loss(F0)
 
 
-    def normalized_total_power(self, F0: np.ndarray[float]) -> float:
+    def normalized_total_power(self, F0: npt.ArrayLike[float]) -> float:
         return self.mobility(F0) * self.EN * self.EN
