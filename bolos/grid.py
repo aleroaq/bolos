@@ -63,7 +63,7 @@ class Grid(object):
         self._interp = None
 
 
-    def interpolate(self, f: npt.ArrayLike[float], other: "Grid") -> npt.ArrayLike[float]:
+    def interpolate(self, f: npt.NDArray[np.float64], other: "Grid") -> npt.NDArray[np.float64]:
         """ Interpolates into this grid an eedf defined in another grid. 
 
         Parameters
@@ -168,7 +168,7 @@ class LogGrid(Grid):
 class AutomaticGrid(Grid):
     """ A grid set automatically using a previous estimation of the EEDF
     to fix a peak energy.  """
-    def __init__(self, grid: Grid, f0: npt.ArrayLike[float], delta: float = 1e-4):
+    def __init__(self, grid: Grid, f0: npt.NDArray[np.float64], delta: float = 1e-4):
         # We will create a new grid where the number of particles is roughly
         # the same inside each cell and the number of cells is the same as in
         # grid.

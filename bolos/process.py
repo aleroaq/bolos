@@ -24,7 +24,7 @@ class Process(object):
                     'EFFECTIVE': 1}
 
                  
-    def __init__(self, target: str = None, kind: str = None, data: npt.ArrayLike[float] | list[float] = None,
+    def __init__(self, target: str = None, kind: str = None, data: npt.NDArray[np.float64] | list[float] = None,
                  comment: str = '', mass_ratio: float = None,
                  product: str = None, threshold: float = 0, weight_ratio: float = None):
         self.target_name = target
@@ -61,7 +61,7 @@ class Process(object):
         self.cached_grid = None
 
 
-    def scatterings(self, g: npt.ArrayLike[float], eps: npt.ArrayLike[float]) -> npt.ArrayLike[float]:
+    def scatterings(self, g: npt.NDArray[np.float64], eps: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         if len(self.j) == 0:
             # When we do not have inelastic collisions or when the grid is
             # smaller than the thresholds, we still return an empty array
@@ -138,7 +138,7 @@ class NullProcess(Process):
         return "{NULL}"
 
 
-def padinterp(data: npt.ArrayLike[float]) -> interp1d:
+def padinterp(data: npt.NDArray[np.float64]) -> interp1d:
     """ Interpolates from data but adds elements at the beginning and end
     to extrapolate cross-sections. """
     if data[0, 0] > 0:
@@ -151,7 +151,7 @@ def padinterp(data: npt.ArrayLike[float]) -> interp1d:
     return interp1d(x, y, kind='linear')
 
 
-def int_linexp0(a: float, b: float, u0: float, u1: float, g: float, x0: float) -> npt.ArrayLike[float]:
+def int_linexp0(a: float, b: float, u0: float, u1: float, g: float, x0: float) -> npt.NDArray[np.float64]:
     """ This is the integral in [a, b] of u(x) * exp(g * (x0 - x)) * x 
     assuming that
     u is linear with u({a, b}) = {u0, u1}."""
