@@ -133,6 +133,8 @@ class BoltzmannSolver(object):
 
         self.grid = grid
 
+        self.coulomb = False
+
         # A dictionary with target_name -> target
         self.target = {}
 
@@ -588,6 +590,8 @@ class BoltzmannSolver(object):
         # The R (G) term, which we add to A.
         G = 2 * self.denergy32 * nu / 3
 
+        if self.coulomb: self._coulomb(F)
+
         A = self._scharf_gummel(sigma_tilde, G)
 
         # if np.any(np.isnan(A.todense())):
@@ -597,7 +601,7 @@ class BoltzmannSolver(object):
 
 
     def _norm(self, f: np.ndarray[float]) -> float:
-        return integrate.simps(f * np.sqrt(self.cenergy), x=self.cenergy)
+        return integrate.simpson(f * np.sqrt(self.cenergy), x=self.cenergy)
 
         # return np.sum(f * np.sqrt(self.cenergy) * self.denergy)
 
@@ -614,10 +618,15 @@ class BoltzmannSolver(object):
         # used.
         # TODO: Perhaps it would be easier simply to set the appropriate
         # values here to satisfy the b.c.
-        z  = self.W * np.r_[np.nan, np.diff(self.cenergy), np.nan] / D
-
-        a0 = self.W / (1 - np.exp(-z))
-        a1 = self.W / (1 - np.exp(z))
+        if self.coulomb:
+            D += self.DC
+            z  = (self.W + self.WC) * np.r_[np.nan, np.diff(self.cenergy), np.nan] / D
+            a0 = (self.W + self.WC) / (1 - np.exp(-z))
+            a1 = (self.W + self.WC) / (1 - np.exp(z))
+        else:
+            z  = self.W * np.r_[np.nan, np.diff(self.cenergy), np.nan] / D
+            a0 = self.W / (1 - np.exp(-z))
+            a1 = self.W / (1 - np.exp(z))
 
         diags = np.zeros((3, self.n))
 
@@ -678,6 +687,29 @@ class BoltzmannSolver(object):
                               shape=(self.n, self.n))
 
         return PQ
+    
+    def _coulomb(self, F0: np.ndarray[float], electron_density: float, ion_degree: float) -> None:
+        coulomb_param = (12. * np.pi * (co.epsilon_0 * kTe)**1.5 / 
+                         co.e**3 / np.sqrt(electron_density))
+        a = co.e**2 * GAMMA / 24. / np.pi / co.epsilon_0**2 * np.log(coulomb_param)
+
+        kTe = 2. / 3. * co.e * integrate.simpson(self.cenergy**1.5 * F0, x=self.cenergy)
+        A1_f = np.sqrt(self.cenergy) * F0
+        A2_f = self.cenergy**1.5 * F0
+        A1 = np.array([integrate.simpson(A1_f[:i+1], x=self.cenergy[:i+1]) 
+                       for i in range(self.n)])
+        A2 = np.array([integrate.simpson(A2_f[:i+1], x=self.cenergy[:i+1]) 
+                       for i in range(self.n)])
+        A3 = np.array([integrate.simpson(F0[i:], x=self.cenergy[i:]) 
+                       for i in range(self.n)])
+
+        A1 = np.r_[A1[0], 0.5*(A1[1:] + A1[:-1]), A1[-1]]
+        A2 = np.r_[A2[0], 0.5*(A2[1:] + A2[:-1]), A2[-1]]
+        A3 = np.r_[A3[0], 0.5*(A3[1:] + A3[:-1]), A3[-1]]
+
+        self.WC = -3. * a * ion_degree * A1
+        self.DC = 2. * a * ion_degree * (A2 + self.benergy**1.5 * A3)
+        return
 
     ##
     # Now some functions to calculate rates transport parameters from the
@@ -763,7 +795,7 @@ class BoltzmannSolver(object):
         y = DF0 * self.benergy / sigma_tilde
         y[0] = 0
 
-        return -(GAMMA / 3) * integrate.simps(y, x=self.benergy)
+        return -(GAMMA / 3) * integrate.simpson(y, x=self.benergy)
 
 
     def diffusion(self, F0: np.ndarray[float]) -> float:
@@ -799,7 +831,7 @@ class BoltzmannSolver(object):
 
         y = F0 * self.cenergy / sigma_tilde
 
-        return (GAMMA / 3) * integrate.simps(y, x=self.cenergy)
+        return (GAMMA / 3) * integrate.simpson(y, x=self.cenergy)
 
 
     def mean_energy(self, F0: np.ndarray[float]) -> float:
@@ -857,8 +889,8 @@ class BoltzmannSolver(object):
             y1 = process.interp(self.cenergy) * self.cenergy * self.cenergy * F0
             y2 = process.interp(self.benergy) * self.kT * DF0
             energy += target.density * 2 * target.mass_ratio * (
-                      integrate.simps(y1, x=self.cenergy) +
-                      integrate.simps(y2, x=self.benergy))
+                      integrate.simpson(y1, x=self.cenergy) +
+                      integrate.simpson(y2, x=self.benergy))
         return GAMMA * energy
 
 
