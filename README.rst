@@ -14,8 +14,8 @@ cross-section input format.
 The code was originally developed by `Alejandro Luque <http://www.iaa.es/~aluque>`_ at the 
 `Instituto de Astrofísica de Andalucía <http://www.iaa.es>`_ (IAA), `CSIC <http://www.csic.es>`_, 
 later updated by `Bang-Shiuh Chen <https://orcid.org/0000-0003-0437-3659>`_. 
-This version is maintained by `Alejandro Roa <https://orcid.org/0009-0005-7243-9834>` and the 
-`Nonequilibrium Plasma Team <https://em2c.centralesupelec.fr/Axe_Plasma>` at Laboratoire EM2C, CNRS, CentraleSupélec.
+This version is maintained by `Alejandro Roa <https://orcid.org/0009-0005-7243-9834>`_ and the 
+`Nonequilibrium Plasma Team <https://em2c.centralesupelec.fr/Axe_Plasma>`_ at Laboratoire EM2C, CNRS, CentraleSupélec.
 The current version adds new features compared to the original code, including the 
 ability to add Coulomb collisions while keeping speeds relatively low by using 
 `Numba <https://numba.pydata.org/>`_ to accelerate the code. 
