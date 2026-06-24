@@ -1,5 +1,5 @@
 r""" 
-This scripts allows for the validation of the Boltzmann solver with electron-electron and electron-ion collisions turned off.
+This scripts allows for the validation of the Boltzmann solver with electron-electron and electron-ion collisions turned on.
 """
 
 import numpy as np
@@ -13,18 +13,26 @@ def main():
     gr = grid.LinearGrid(0, 100, 500)
 
     # Initiate the solver instance
-    bsolver = solver.BoltzmannSolver(gr)
+    bsolver = solver.BoltzmannSolver(
+        grid=gr,
+        ee_collisions=True,
+        ei_collisions=True,
+        kraphak_correction=True,
+    )
 
     # Parse the cross-section file in BOSIG+ format and load it into the
     # solver.
-    with open("O2_ISTLisbon_dataset.txt") as fp:
+    with open("O2_ISTLisbon_dataset_w_Coulomb.txt") as fp:
         bsolver.load_collisions(parser.parse(fp))
 
     # Set the conditions.  And initialize the solver
     T = 300.
     P = 100000
-    ND = P / co.k / T
-    bsolver.target['O2'].density = 1.0
+    ND = 2.14e25
+    ionization_degree = 0.1
+    ne = ionization_degree * ND
+    bsolver.target['O2+'].density = 0.1
+    bsolver.target['O2'].density = 0.9
     bsolver.kT = T * co.k / co.eV
     EN_vals = (np.linspace(0., 1., 100)**2 * 900 + 100) * solver.TOWNSEND
     Te_vals = np.zeros_like(EN_vals)
@@ -34,17 +42,16 @@ def main():
 
     bsolver.EN = EN_vals[0]
     bsolver.init()
-    bsolver.update(T * co.k / co.eV, EN_vals[0])
+    bsolver.update(T * co.k / co.eV, EN_vals[0], ne=ne, ionization_degree=ionization_degree)
 
     print("Initial conditions: Temperature = %.3f K, E/N = %.3e Td, N = %.3e m^-3" % (T, bsolver.EN / solver.TOWNSEND, ND))
     print()
     print()
 
-    # Start with Maxwell EEDF as initial guess.  Here we are starting with
-    # with an electron temperature of 2 eV
+    # Start with Maxwell EEDF as initial guess.
     for i, EN in enumerate(EN_vals):
         bsolver.EN = EN
-        bsolver.update(T * co.k / co.eV, EN)
+        bsolver.update(T * co.k / co.eV, EN, ne=ne, ionization_degree=ionization_degree)
         f0 = bsolver.maxwell(2.0)
 
         # Solve the Boltzmann equation with a tolerance rtol and maxn iterations.

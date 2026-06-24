@@ -16,26 +16,33 @@ class Target(object):
         self.density = 0.0
 
         # Lists of all processes pertaining this target
-        self.elastic             = []
-        self.effective           = []
-        self.attachment          = []
-        self.ionization          = []
-        self.excitation          = []
-        self.weighted_elastic    = []
+        self.elastic : list[Process]             = []
+        self.effective : list[Process]           = []
+        self.attachment : list[Process]          = []
+        self.ionization : list[Process]          = []
+        self.excitation : list[Process]          = []
+        self.weighted_elastic : list[Process]    = []
+        self.coulomb : list[Process]             = []
 
-        self.kind = {'ELASTIC': self.elastic,
-                     'EFFECTIVE': self.effective,
-                     'MOMENTUM': self.effective,
-                     'ATTACHMENT': self.attachment,
-                     'IONIZATION': self.ionization,
-                     'EXCITATION': self.excitation,
-                     'WEIGHTED_ELASTIC': self.weighted_elastic}
+        self.kind = {
+            'ELASTIC': self.elastic,
+            'EFFECTIVE': self.effective,
+            'MOMENTUM': self.effective,
+            'ATTACHMENT': self.attachment,
+            'IONIZATION': self.ionization,
+            'EXCITATION': self.excitation,
+            'WEIGHTED_ELASTIC': self.weighted_elastic,
+            'COULOMB': self.coulomb,
+        }
 
         self.by_product = defaultdict(list)
 
         logging.debug("Target %s created." % str(self))
 
-    def add_process(self, process: Process):
+    def add_process(
+        self, 
+        process: Process,
+    ):
         kind = self.kind[process.kind]
         kind.append(process)
 
@@ -62,18 +69,26 @@ class Target(object):
         If the user has specified an effective cross-section, we remove
         all the other cross-sections from it. """
         if self.elastic and self.effective:
-            raise ValueError("In target '%s': EFFECTIVE/MOMENTUM and ELASTIC"
+            raise ValueError("In target '%s': EFFECTIVE/MOMENTUM and ELASTIC "
+                             "cross-sections are incompatible." % self)
+        
+        if self.elastic and self.coulomb:
+            raise ValueError("In target '%s': COULOMB and ELASTIC "
+                             "cross-sections are incompatible." % self)
+        
+        if self.effective and self.coulomb:
+            raise ValueError("In target '%s': COULOMB and EFFECTIVE "
                              "cross-sections are incompatible." % self)
 
-        if self.elastic:
+        if self.elastic or self.coulomb:
             return
 
         if len(self.effective) > 1:
             raise ValueError("In target '%s': Can't handle more that 1 "
                              "EFFECTIVE/MOMENTUM for a given target" % self)
             
-        if not self.effective:
-            logging.warning("Target %s has no ELASTIC or EFFECTIVE "
+        if not self.effective and not self.coulomb:
+            logging.warning("Target %s has no ELASTIC or EFFECTIVE or COULOMB "
                             "cross sections" % str(self))
             return
 
@@ -89,16 +104,18 @@ class Target(object):
             newdata[:, 1] = np.where(newdata[:, 1] > 0, newdata[:, 1], 0)
 
 
-        newelastic = Process(target=self.name, kind='ELASTIC',
-                             data=newdata,
-                             mass_ratio=self.effective[0].mass_ratio,
-                             comment="Calculated from EFFECTIVE cross sections")
+        newelastic = Process(
+            target=self.name, 
+            kind='ELASTIC',
+            data=newdata,
+            mass_ratio=self.effective[0].mass_ratio,
+            comment="Calculated from EFFECTIVE cross sections")
 
         logging.debug("EFFECTIVE -> ELASTIC for target %s" % str(self))
         self.add_process(newelastic)
 
         # Remove the EFFECTIVE processes.
-        self.effective = []
+        self.effective: list[Process] = []
 
 
     @property
@@ -110,8 +127,11 @@ class Target(object):
     def everything(self) -> list[Process]:
         """ A list with ALL processes.  We do not use all as a name
         to avoid confusion with the python function."""
-        return (self.elastic + self.attachment 
-                + self.ionization + self.excitation)
+        return (
+            self.elastic + self.attachment + 
+            self.ionization + self.excitation + 
+            self.coulomb
+        )
 
     def __repr__(self) -> str:
         return "Target(%s)" % repr(self.name)

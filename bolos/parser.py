@@ -101,6 +101,7 @@ def _read_momentum(fp: io.TextIOBase) -> dict:
 
     return d
 
+
 RE_ARROW = re.compile('<?->')    
 def _read_excitation(fp: io.TextIOBase) -> dict:
     """ Reads an EXCITATION or IONIZATION block. """
@@ -140,9 +141,22 @@ def _read_attachment(fp: io.TextIOBase) -> dict:
     return d
 
 
+def _read_coulomb(fp: io.TextIOBase) -> dict:
+    """ Reads a COULOMB block. """
+    target, arg, comment, data = _read_block(fp, has_arg=True)
+    mass_ratio, squared_charge = float(arg.split()[0]), float(arg.split()[1])
+    d = dict(target=target,
+             squared_charge=squared_charge,
+             mass_ratio=mass_ratio,
+             comment=comment,
+             data=data)
+    return d
+
+
 KEYWORDS = {"MOMENTUM": _read_momentum, 
             "ELASTIC": _read_momentum, 
             "EFFECTIVE": _read_momentum,
             "EXCITATION": _read_excitation,
             "IONIZATION": _read_excitation,
-            "ATTACHMENT": _read_attachment}
+            "ATTACHMENT": _read_attachment,
+            "COULOMB": _read_coulomb}

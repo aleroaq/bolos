@@ -8,7 +8,7 @@ dynamic = ["version"] # Version is read from __version__.txt
 description = "A library to solve the Boltzmann equation"
 authors = [
     { name = "Alejandro Luque" },       # Original author
-    { name = "Bang Shiuh" },            # Author
+    { name = "Bang-Shiuh Chen" },       # Author
     { name = "Alejandro Roa Quintero" } # Author of this version
 ]
 readme = "README.rst"
@@ -31,11 +31,12 @@ classifiers = [
 ]
 dependencies = [
     "numpy", 
-    "scipy"
+    "scipy",
+    "numba",
 ]
 
 [project.urls]
-Homepage = "https://gitlab.com/mariottop/pycollirad"
+Homepage = "https://github.com/aleroaq/bolos"
 
 [tool.setuptools]
 packages = ["bolos"]
